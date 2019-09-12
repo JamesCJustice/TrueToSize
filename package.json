@@ -1,0 +1,19 @@
+{
+  "name": "TrueToSize",
+  "version": "1.0.0",
+  "description": "Node.js on Docker",
+  "author": "James Justice <jamescolubmusjustice@gmail.com>",
+  "main": "server.js",
+  "scripts": {
+    "start": "docker-compose build ; docker-compose up"
+  },
+  "dependencies": {
+    "async": "^3.1.0",
+    "express": "^4.17.1",
+    "pg": "^7.12.1"
+  },
+  "devDependencies": {
+    "mocha": "^6.2.0",
+    "nyc": "^14.1.1"
+  }
+}
