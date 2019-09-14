@@ -5,7 +5,8 @@
   "author": "James Justice <jamescolubmusjustice@gmail.com>",
   "main": "server.js",
   "scripts": {
-    "start": "docker-compose build ; docker-compose up"
+    "start": "docker-compose -f docker/app/docker-compose.yml up --build",
+    "test": "docker-compose -f docker-compose.test.yml up --build"
   },
   "dependencies": {
     "async": "^3.1.0",
@@ -13,7 +14,12 @@
     "pg": "^7.12.1"
   },
   "devDependencies": {
+    "chai": "^4.2.0",
+    "docker-compose-mocha": "^1.2.0",
+    "dotenv": "^8.1.0",
     "mocha": "^6.2.0",
-    "nyc": "^14.1.1"
+    "nyc": "^14.1.1",
+    "request": "^2.88.0",
+    "sys": "0.0.1"
   }
 }
