@@ -2,7 +2,6 @@ version: "3"
 services:
   app:
     container_name: app
-    restart: always
     env_file: env_file
     build:
       context: .
@@ -16,7 +15,7 @@ services:
     container_name: "my_postgres"
     env_file: env_file
     ports:
-      - "54320:5432"
+      - "54321:5432"
     volumes:
       - dbdata:/var/lib/postgresql/data
 volumes:
