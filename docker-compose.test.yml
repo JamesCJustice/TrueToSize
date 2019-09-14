@@ -1,0 +1,23 @@
+version: "3"
+services:
+  app:
+    container_name: app
+    restart: always
+    env_file: env_file
+    build:
+      context: .
+      dockerfile: docker/test/Dockerfile
+    ports:
+      - "8080:8080"
+    links:
+      - db
+  db:
+    image: "postgres:11"
+    container_name: "my_postgres"
+    env_file: env_file
+    ports:
+      - "54320:5432"
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+volumes:
+  dbdata:
