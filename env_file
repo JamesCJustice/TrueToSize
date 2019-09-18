@@ -1,3 +1,4 @@
 PGHOST=db
 PGUSER=postgres
 PGPORT=5432
+PGDATABASE=TrueToSize

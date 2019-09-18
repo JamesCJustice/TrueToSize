@@ -6,25 +6,47 @@ const it = require('mocha').it;
 const assert = require('assert');
 const Client = require('pg').Client;
 const install = require('../bin/install');
-console.log(JSON.stringify(install));
+
+process.env.PGDATABASE = "TEST_" + process.env.PGDATABASE;
+
+async function table_exists(schema, table) {
+  const client = new Client();
+
+  try {
+    await client.connect();
+  }
+  catch (e) {
+    assert.fail("Could not connect: " + e);
+  }
+
+  const sql = "SELECT EXISTS (" +
+            " SELECT 1" +
+            " FROM   information_schema.tables " +
+            " WHERE  table_schema = $1" +
+            " AND    table_name = $2" +
+            ");";
+  const { rows } = await client.query(sql, [schema, table]);
+
+  return rows[0].exists;
+}
+
 
 describe('install and uninstall', function() {
 
   before(async function() {
-    await install();
+    await install.install();
   });
 
   it('should start the postgres server', async function() {
-    const client = new Client({ // Exclude database env variable to select default database
-      user: process.env.PGUSER,
-      host: process.env.PGHOST,
-      port: process.env.PGPORT
+    const client = new Client({
+      database: 'postgres'
     });
 
     try {
-        await client.connect();
-    } catch (e) {
-        assert.fail("Could not connect: ${e}");
+      await client.connect();
+    }
+    catch (e) {
+      assert.fail("Could not connect: " + e);
     }
     
     const { rows } = await client.query("SELECT 'Hello, world!' as message");
@@ -33,33 +55,12 @@ describe('install and uninstall', function() {
   });
 
   it('should create the database tables', async function() {
-    const client = new Client();
+    const tables = ['score_submissions', 'aggregate_scores'];
 
-    try {
-        await client.connect();
-    } catch (e) {
-        assert.fail("Could not connect: ${e}");
+    for (var i = 0; i < tables.length; i++) {
+      const exists = await table_exists('truetosize', tables[i]);
+      expect(exists, "table '" + tables[i] + "' exists").to.equal(true);  
     }
-
-    var sql = "SELECT EXISTS (" +
-              " SELECT 1" +
-              " FROM   information_schema.tables " +
-              " WHERE  table_schema = 'TrueToSize'" +
-              " AND    table_name = 'score_submissions'" +
-              ");";
-    var { rows } = await client.query(sql);
-
-    expect(rows[0].exists).to.equal(true);
-
-    var sql = "SELECT EXISTS (" +
-              " SELECT 1" +
-              " FROM   information_schema.tables " +
-              " WHERE  table_schema = 'TrueToSize'" +
-              " AND    table_name = 'aggregate_scores'" +
-              ");";
-    var { rows } = await client.query(sql);
-
-    expect(rows[0].exists).to.equal(true);
 
   });
 });

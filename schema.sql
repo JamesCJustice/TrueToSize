@@ -18,5 +18,5 @@ CREATE TABLE aggregate_scores (
 );
 
 
-DROP TABLE score_submissions;
-DROP TABLE aggregate_scores;
+DROP TABLE IF EXISTS score_submissions;
+DROP TABLE IF EXISTS aggregate_scores;
