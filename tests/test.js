@@ -6,8 +6,12 @@ const it = require('mocha').it;
 const assert = require('assert');
 const Client = require('pg').Client;
 const install = require('../bin/install');
+const uninstall = require('../bin/uninstall');
+const DATABASE_TABLES = ['score_submissions', 'aggregate_scores'];
 
 process.env.PGDATABASE = "TEST_" + process.env.PGDATABASE;
+
+
 
 async function table_exists(schema, table) {
   const client = new Client();
@@ -16,7 +20,7 @@ async function table_exists(schema, table) {
     await client.connect();
   }
   catch (e) {
-    assert.fail("Could not connect: " + e);
+    console.error("Could not connect: " + e);
   }
 
   const sql = "SELECT EXISTS (" +
@@ -55,12 +59,18 @@ describe('install and uninstall', function() {
   });
 
   it('should create the database tables', async function() {
-    const tables = ['score_submissions', 'aggregate_scores'];
-
-    for (var i = 0; i < tables.length; i++) {
-      const exists = await table_exists('truetosize', tables[i]);
-      expect(exists, "table '" + tables[i] + "' exists").to.equal(true);  
+    for (var i = 0; i < DATABASE_TABLES.length; i++) {
+      const exists = await table_exists('truetosize', DATABASE_TABLES[i]);
+      expect(exists, "table '" + DATABASE_TABLES[i] + "' exists").to.equal(true);  
     }
 
+  });
+
+  it('should uninstall database tables', async function() {
+    await uninstall.uninstall();
+    for (var i = 0; i < DATABASE_TABLES.length; i++) {
+      const exists = await table_exists('truetosize', DATABASE_TABLES[i]);
+      expect(exists, "table '" + DATABASE_TABLES[i] + "' has been removed").to.equal(false);  
+    }
   });
 });
