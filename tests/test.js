@@ -5,9 +5,14 @@ const before = require('mocha').before;
 const it = require('mocha').it;
 const assert = require('assert');
 const Client = require('pg').Client;
-
+const install = require('../bin/install');
+console.log(JSON.stringify(install));
 
 describe('install and uninstall', function() {
+
+  before(async function() {
+    await install();
+  });
 
   it('should start the postgres server', async function() {
     const client = new Client({ // Exclude database env variable to select default database
