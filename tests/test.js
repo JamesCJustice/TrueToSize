@@ -319,4 +319,72 @@ describe('/submit_score', function() {
     });
   });
 
+  describe('fetch_submission', function() {
+    before(async function() {
+      await install.install();
+      await request(app)
+      .post('/submit_score')
+      .send({ 
+        submitter: "test_submitter",
+        shoe_type: "test_shoe",
+        score: 5
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(201);
+    });
+    after(async function() {
+      await uninstall.uninstall();
+    });
+
+    it('gives a 400 when missing required parameters', async function() {
+      // missing submitter
+      await request(app)
+      .post('/fetch_submission')
+      .send({
+        shoe_type: "test_shoe"
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(400);
+
+      // missing shoe_type
+      await request(app)
+      .post('/fetch_submission')
+      .send({ 
+        submitter: "test_submitter"
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(400);
+    });
+
+    it('returns 404 when submission not found',  async function() {
+      await request(app)
+      .post('/fetch_submission')
+      .send({ 
+        submitter: "waldo",
+        shoe_type: "test_shoe"
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(400);
+    });
+
+    it('returns an existing submission',  async function() {
+      const results = await request(app)
+      .post('/fetch_submission')
+      .send({ 
+        submitter: "test_user",
+        shoe_type: "test_shoe"
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(200);
+
+      console.log("Results: " + JSON.stringify(results));
+    });
+  });
+
+
 });
