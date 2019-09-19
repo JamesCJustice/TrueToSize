@@ -76,7 +76,7 @@ describe('install and uninstall', function() {
 });
 
 
-describe('submit_score', function() {
+describe('/submit_score', function() {
   before(async function() {
     await install.install(); 
   });
@@ -84,7 +84,7 @@ describe('submit_score', function() {
     await uninstall.uninstall();
   });
 
-  it('gives a 400 when missing a required field', async function() {
+  it('gives a 400 when missing a required parameter', async function() {
     // Blank
     await request(app)
     .post('/submit_score')
@@ -226,6 +226,7 @@ describe('submit_score', function() {
     }
 
     var { rows } = await client.query("SELECT * FROM truetosize.score_submissions");
+    await client.end();
     expect(rows.length).to.equal(1);
     var row = rows[0];
     expect(row.submitter).to.match(/test_submitter/);
@@ -233,6 +234,87 @@ describe('submit_score', function() {
     expect(row.score).to.equal(4);
   });
 
+  describe('/delete_score', function () {
+    before(async function() {
+      await install.install(); 
+    });
+    after(async function() {
+      await uninstall.uninstall();
+    });
 
+    it('gives a 400 for missing parameters', async function() {
+      // No submitter
+      await request(app)
+      .post('/submit_score')
+      .send({ 
+        shoe_type: "test_shoe"
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(400);
+
+      // No shoe_type
+      await request(app)
+      .post('/submit_score')
+      .send({
+        submitter: "test_submitter",
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(400);
+    });
+
+
+    it('gives a 404 when score cannot be found', async function() {
+      await request(app)
+      .post('/submit_score')
+      .send({ 
+        submitter: "test_submitter",
+        shoe_type: "test_shoe"
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(404);
+    });
+
+    it('removes an existing score', async function() {
+      await request(app)
+      .post('/submit_score')
+      .send({ 
+        submitter: "test_submitter",
+        shoe_type: "test_shoe"
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(201);
+
+      const client = new Client();
+      try {
+        await client.connect();
+      }
+      catch (e) {
+        assert.fail("Could not connect: " + e);
+      }
+
+      var { rows } = await client.query("SELECT * FROM truetosize.score_submissions");
+      expect(rows.length).to.equal(1); We need something to remove
+      
+      await request(app)
+      .post('/delete_score')
+      .send({ 
+        submitter: "test_submitter",
+        shoe_type: "test_shoe"
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(200);
+
+      var results = await client.query("SELECT * FROM truetosize.score_submissions");
+      rows = results.rows;
+      expect(rows.length).to.equal(1);
+
+    });
+
+  });
 
 });
