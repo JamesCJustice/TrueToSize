@@ -20,4 +20,6 @@ app.listen(process.env.APPHOST, process.env.APPPORT);
 
 console.log(`Running on http://${process.env.APPHOST}:${process.env.APPPORT}`);
 
+console.log(JSON.stringify(process.env));
+
 exports.app = app;

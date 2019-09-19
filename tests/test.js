@@ -7,11 +7,10 @@ const Client = require('pg').Client;
 const install = require('../bin/install');
 const uninstall = require('../bin/uninstall');
 const request = require('supertest');
-const app = require('../server').app;
 
 const DATABASE_TABLES = ['score_submissions', 'aggregate_scores'];
 process.env.PGDATABASE = "TEST_" + process.env.PGDATABASE;
-
+const app = require('../server').app;
 
 
 async function table_exists(schema, table) {
@@ -128,7 +127,7 @@ describe('submit_score', function() {
     .expect(400);
   });
 
-  it('gives a 400 on out of range scores', async function() {
+  it('gives a 400 on invalid scores', async function() {
     // too low
     await request(app)
     .post('/submit_score')
@@ -152,9 +151,33 @@ describe('submit_score', function() {
     .set('Accept', 'application/json')
     .expect('Content-Type', /json/)
     .expect(400);
+
+    // Not an integer
+    await request(app)
+    .post('/submit_score')
+    .send({ 
+      submitter: "test_submitter",
+      shoe_type: "test_shoe",
+      score: "five"
+    })
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(400);
+
+    // Also not an integer
+    await request(app)
+    .post('/submit_score')
+    .send({ 
+      submitter: "test_submitter",
+      shoe_type: "test_shoe",
+      score: 1.5
+    })
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(400);
   });
 
-  it('gives 201 on valid request', async function() {
+  it('gives 201 on valid request and stores submission', async function() {
     await request(app)
     .post('/submit_score')
     .send({ 

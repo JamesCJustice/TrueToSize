@@ -1,0 +1,50 @@
+const Client = require('pg').Client;
+
+module.exports = function(app){
+  app.post('/submit_score', async function(req, res){
+    console.log("Body looks like: " + JSON.stringify(req.body));
+
+    if(!('submitter' in req.body) || !('shoe_type' in req.body) || !('score' in req.body)) {
+      return res.status(400).json({
+        success: 0,
+        error: "Missing required parameter."
+      });
+    }
+
+    const submitter = req.body.submitter;
+    const shoe_type = req.body.shoe_type;
+    const score = req.body.score;
+
+    if(!Number.isInteger(score) || score < 1 || score > 5){
+      return res.status(400).json({
+        success: 0,
+        error: "Invalid score."
+      });
+    }
+
+    const update = "UPDATE truetosize.score_submissions SET score = $1 " +
+                   "WHERE submitter = $2 AND shoe_type = $3";
+    const insert = "INSERT INTO truetosize.score_submissions(submitter, shoe_type, score) " +
+                   "SELECT $1, $2, $3 " +
+                   "WHERE NOT EXISTS (SELECT 1 FROM truetosize.score_submissions WHERE submitter=$4 AND shoe_type=$5)";
+    const client = new Client();
+    try {
+      await client.connect();
+      await client.query(update, [ score, submitter, shoe_type ]);
+      await client.query(insert, [ submitter, shoe_type, score, submitter, shoe_type ]);
+      await client.query('COMMIT');
+      await client.end();
+    }
+    catch (e) {
+      console.error("Error connecting: " + e);
+      return res.status(500).json({
+        success: 0,
+        error: "Internal server error"
+      });
+    }
+
+    res.status(201).json({  
+      success: 1
+    });
+  });
+}

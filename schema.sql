@@ -20,3 +20,10 @@ CREATE TABLE aggregate_scores (
 
 DROP TABLE IF EXISTS score_submissions;
 DROP TABLE IF EXISTS aggregate_scores;
+
+
+
+UPDATE table SET field='C', field2='Z' WHERE id=3;
+INSERT INTO table (id, field, field2)
+       SELECT 3, 'C', 'Z'
+       WHERE NOT EXISTS (SELECT 1 FROM table WHERE id=3);
