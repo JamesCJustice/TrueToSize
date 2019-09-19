@@ -7,7 +7,6 @@ const assert = require('assert');
 const Client = require('pg').Client;
 const install = require('../bin/install');
 const uninstall = require('../bin/uninstall');
-var rp = require('request-promise');
 const SITE_URL = `http://${process.env.APPHOST}:${process.env.APPPORT}`;
 
 const DATABASE_TABLES = ['score_submissions', 'aggregate_scores'];
@@ -89,26 +88,7 @@ describe('rest endpoints', function() {
   });
 
   it('should store submitted entries', async function() {
-    const client = new Client();
-
-    var response;
-    try {
-      response = await rp({
-        method: 'POST',
-        uri: SITE_URL + "/submit_score",
-        body: {
-            submitter: "test submitter",
-            shoe_type: "test shoe",
-            score: 5
-        },
-        json: true
-      });
-    }
-    catch (e) {
-      assert.fail("Error submitting score: " + e);
-    }
     
-
   });
 
 });

@@ -9,8 +9,10 @@ app.get('/', (req, res) => {
   res.send('Index');
 });
 
-require('./routes')(app);
+//var routes = require('./routes')(app);
+//console.log(JSON.stringify(routes));
+
 
 app.listen(process.env.APPHOST, process.env.APPPORT);
-console.log(process.env);
+
 console.log(`Running on http://${process.env.APPHOST}:${process.env.APPPORT}`);
