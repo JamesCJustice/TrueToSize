@@ -80,8 +80,7 @@ async function create_aggregate_scores_table() {
 
   const table_ddl = "CREATE TABLE IF NOT EXISTS truetosize.aggregate_scores (" +
                     "  shoe_type VARCHAR(255) PRIMARY KEY," +
-                    "  aggregate_score FLOAT(1) NOT NULL," +
-                    "  dirty BOOLEAN DEFAULT true  " +
+                    "  average_score FLOAT(1) NOT NULL" +
                     ");";
 
   const shoe_index = "CREATE INDEX IF NOT EXISTS aggregate_shoe_type_index " +

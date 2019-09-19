@@ -85,4 +85,42 @@ module.exports = function(app) {
       success: 1
     });
   });
+
+  app.get('/fetch_submission', async function(req, res) {
+    if(!('submitter' in req.body) || !('shoe_type' in req.body)) {
+      return res.status(400).json({
+        success: 0,
+        error: "Missing required parameter"
+      });
+    }
+
+    const submitter = req.body.submitter;
+    const shoe_type = req.body.shoe_type;
+    const select = "SELECT * FROM truetosize.score_submissions WHERE submitter = $1 AND shoe_type = $2";
+    
+    var client = new Client();
+    try {
+      await client.connect();
+      var {rows} = await client.query(select, [ submitter, shoe_type ]);
+      await client.end();
+    }
+    catch (e) {
+      console.error("Error connecting: " + e);
+      return res.status(500).json({
+        success: 0,
+        error: "Internal server error: " + e
+      });
+    }
+    if(rows.length == 0) {
+      return res.status(404).json({
+        success: 0,
+        error: "Submission not found"
+      });
+    }
+
+    return res.status(200).json({
+      success: 1,
+      submission: rows[0]
+    });
+  });
 }

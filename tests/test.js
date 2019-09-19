@@ -5,8 +5,10 @@ const it = require('mocha').it;
 const assert = require('assert');
 const Client = require('pg').Client;
 const install = require('../bin/install');
+const aggregation = require('../bin/aggregate_scores');
 const uninstall = require('../bin/uninstall');
 const request = require('supertest');
+
 
 const DATABASE_TABLES = ['score_submissions', 'aggregate_scores'];
 process.env.PGDATABASE = "TEST_" + process.env.PGDATABASE;
@@ -340,7 +342,7 @@ describe('/submit_score', function() {
     it('gives a 400 when missing required parameters', async function() {
       // missing submitter
       await request(app)
-      .post('/fetch_submission')
+      .get('/fetch_submission')
       .send({
         shoe_type: "test_shoe"
       })
@@ -350,7 +352,7 @@ describe('/submit_score', function() {
 
       // missing shoe_type
       await request(app)
-      .post('/fetch_submission')
+      .get('/fetch_submission')
       .send({ 
         submitter: "test_submitter"
       })
@@ -361,21 +363,21 @@ describe('/submit_score', function() {
 
     it('returns 404 when submission not found',  async function() {
       await request(app)
-      .post('/fetch_submission')
+      .get('/fetch_submission')
       .send({ 
         submitter: "waldo",
         shoe_type: "test_shoe"
       })
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
-      .expect(400);
+      .expect(404);
     });
 
     it('returns an existing submission',  async function() {
       const results = await request(app)
-      .post('/fetch_submission')
+      .get('/fetch_submission')
       .send({ 
-        submitter: "test_user",
+        submitter: "test_submitter",
         shoe_type: "test_shoe"
       })
       .set('Accept', 'application/json')
@@ -386,5 +388,97 @@ describe('/submit_score', function() {
     });
   });
 
+});
+
+describe('aggregate_scores', function() {
+  before(async function() {
+    await install.install();
+    var insert = "INSERT INTO truetosize.score_submissions(submitter, shoe_type, score)" +
+                 "VALUES " +
+                 "('user1', 'red_shoe', 5), " +
+                 "('user2', 'red_shoe', 4), " +
+                 "('user3', 'red_shoe', 3), " +
+                 "('user4', 'red_shoe', 2), " +
+                 "('user5', 'red_shoe', 1), " +
+                 "('user6', 'blue_shoe', 1), " +
+                 "('user7', 'blue_shoe', 1), " +
+                 "('user8', 'blue_shoe', 1), " +
+                 "('user9', 'blue_shoe', 1), " +
+                 "('user10', 'blue_shoe', 5)";
+  const client = new Client();
+    try {
+      await client.connect();
+      await client.query(insert);
+      await client.end();
+    }
+    catch (e) {
+      assert.fail("Could not populate table: " + e);
+    }
+
+    await aggregation.aggregate();
+
+  });
+  after(async function() {
+    await uninstall.uninstall();
+  });
+
+  it('Creates a score for each unique shoe', async function() {
+    const client = new Client();
+    try {
+      await client.connect();
+      var { rows } = await client.query("SELECT * FROM truetosize.aggregate_scores");
+      await client.end();
+    }
+    catch (e) {
+      assert.fail("Could not populate table: " + e);
+    }
+
+    expect(rows.length).to.equal(2);
+  });
+
+  it('Calculates averages accurately', async function() {
+    const client = new Client();
+    try {
+      await client.connect();
+      var red_results = await client.query("SELECT * FROM truetosize.aggregate_scores WHERE shoe_type = 'red_shoe'");
+      var blue_results = await client.query("SELECT * FROM truetosize.aggregate_scores WHERE shoe_type = 'blue_shoe'");
+      await client.end();
+    }
+    catch (e) {
+      assert.fail("Could not fetch rows: " + e);
+    }
+    expect(red_results.rows.length).to.equal(1);
+    expect(blue_results.row.length).to.equal(1);
+
+    expect(red_results.rows[0].average_score).to.equal(3);
+    expect(blue_results.rows[0].average_score).to.equal(1.8);
+  });
+
+  it('Updates averages correctly', async function() {
+    var insert = "INSERT INTO truetosize.score_submissions(submitter, shoe_type, score)" +
+                 "VALUES " +
+                 "('user10', 'red_shoe', 1)" +
+                 "('user1', 'blue_shoe', 1)";
+    var select_red = "SELECT * FROM truetosize.aggregate_scores WHERE shoe_type = 'red_shoe'";
+    var select_blue = "SELECT * FROM truetosize.aggregate_scores WHERE shoe_type = 'blue_shoe'";
+
+    try {
+      await client.connect();
+      await client.query(insert);
+      await aggregation.aggregate();
+      var red_results = await client.query(select_red);
+      var blue_results = await client.query(select_blue);
+      await client.end();
+    }
+    catch (e) {
+      assert.fail("Could not fetch rows: " + e);
+    }
+
+    expect(red_results.rows.length).to.equal(1);
+    expect(blue_results.row.length).to.equal(1);
+
+    expect(red_results.rows[0].average_score).to.equal(2.7);
+    expect(blue_results.rows[0].average_score).to.equal(1.7);
+  });
 
 });
