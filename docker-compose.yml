@@ -4,7 +4,9 @@ services:
     container_name: app
     restart: always
     env_file: env_file
-    build: .
+    build: 
+      context: .
+      dockerfile: docker/app/Dockerfile
     ports:
       - "8080:8080"
     links:

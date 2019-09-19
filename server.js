@@ -1,10 +1,7 @@
 'use strict';
 
+require('dotenv').config({ path: "./env_file"});
 const express = require('express');
-
-// Constants
-const PORT = 8080;
-const HOST = '0.0.0.0';
 
 // App
 const app = express();
@@ -12,7 +9,8 @@ app.get('/', (req, res) => {
   res.send('Index');
 });
 
-require('./routes/db')(app);
+require('./routes')(app);
 
-app.listen(PORT, HOST);
-console.log(`Running on http://${HOST}:${PORT}`);
+app.listen(process.env.APPHOST, process.env.APPPORT);
+console.log(process.env);
+console.log(`Running on http://${process.env.APPHOST}:${process.env.APPPORT}`);
