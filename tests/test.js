@@ -1,5 +1,4 @@
 const expect  = require('chai').expect;
-const request = require('request');
 const describe = require('mocha').describe;
 const before = require('mocha').before;
 const it = require('mocha').it;
@@ -7,11 +6,10 @@ const assert = require('assert');
 const Client = require('pg').Client;
 const install = require('../bin/install');
 const uninstall = require('../bin/uninstall');
-const SITE_URL = `http://${process.env.APPHOST}:${process.env.APPPORT}`;
+const request = require('supertest');
+const app = require('../server').app;
 
 const DATABASE_TABLES = ['score_submissions', 'aggregate_scores'];
-
-
 process.env.PGDATABASE = "TEST_" + process.env.PGDATABASE;
 
 
@@ -79,7 +77,7 @@ describe('install and uninstall', function() {
 });
 
 
-describe('rest endpoints', function() {
+describe('submit_score', function() {
   before(async function() {
     await install.install(); 
   });
@@ -87,8 +85,131 @@ describe('rest endpoints', function() {
     await uninstall.uninstall();
   });
 
-  it('should store submitted entries', async function() {
-    
+  it('gives a 400 when missing a required field', async function() {
+    // Blank
+    await request(app)
+    .post('/submit_score')
+    .send({})
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(400);
+
+    // Missing submitter
+    await request(app)
+    .post('/submit_score')
+    .send({ 
+      shoe_type: "test_shoe",
+      score: 5 
+    })
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(400);
+
+    // Missing shoe_type
+    await request(app)
+    .post('/submit_score')
+    .send({ 
+      submitter: "test_submitter",
+      score: 5
+    })
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(400);
+
+    // Missing score
+    await request(app)
+    .post('/submit_score')
+    .send({ 
+      submitter: "test_submitter",
+      shoe_type: "test_shoe"
+    })
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(400);
   });
+
+  it('gives a 400 on out of range scores', async function() {
+    // too low
+    await request(app)
+    .post('/submit_score')
+    .send({ 
+      submitter: "test_submitter",
+      shoe_type: "test_shoe",
+      score: 0
+    })
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(400);
+
+    // too high
+    await request(app)
+    .post('/submit_score')
+    .send({ 
+      submitter: "test_submitter",
+      shoe_type: "test_shoe",
+      score: 6
+    })
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(400);
+  });
+
+  it('gives 201 on valid request', async function() {
+    await request(app)
+    .post('/submit_score')
+    .send({ 
+      submitter: "test_submitter",
+      shoe_type: "test_shoe",
+      score: 5
+    })
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(201);
+
+    const client = new Client();
+    try {
+      await client.connect();
+    }
+    catch (e) {
+      assert.fail("Could not connect: " + e);
+    }
+
+    var { rows } = await client.query("SELECT * FROM truetosize.score_submissions");
+    expect(rows.length).to.equal(1);
+    var row = rows[0];
+    expect(row.submitter).to.match(/test_submitter/);
+    expect(row.shoe_type).to.match(/test_shoe/);
+    expect(row.score).to.equal(5);
+  });
+
+  it('updates an existing score', async function () {
+    await request(app)
+    .post('/submit_score')
+    .send({ 
+      submitter: "test_submitter",
+      shoe_type: "test_shoe",
+      score: 4
+    })
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(201);
+
+    const client = new Client();
+    try {
+      await client.connect();
+    }
+    catch (e) {
+      assert.fail("Could not connect: " + e);
+    }
+
+    var { rows } = await client.query("SELECT * FROM truetosize.score_submissions");
+    expect(rows.length).to.equal(1);
+    var row = rows[0];
+    expect(row.submitter).to.match(/test_submitter/);
+    expect(row.shoe_type).to.match(/test_shoe/);
+    expect(row.score).to.equal(4);
+  });
+
+
 
 });
