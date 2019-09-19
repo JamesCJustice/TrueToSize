@@ -1,9 +1,7 @@
 const Client = require('pg').Client;
 
-module.exports = function(app){
-  app.post('/submit_score', async function(req, res){
-    console.log("Body looks like: " + JSON.stringify(req.body));
-
+module.exports = function(app) {
+  app.post('/submit_score', async function(req, res) {
     if(!('submitter' in req.body) || !('shoe_type' in req.body) || !('score' in req.body)) {
       return res.status(400).json({
         success: 0,
@@ -26,12 +24,53 @@ module.exports = function(app){
                    "WHERE submitter = $2 AND shoe_type = $3";
     const insert = "INSERT INTO truetosize.score_submissions(submitter, shoe_type, score) " +
                    "SELECT $1, $2, $3 " +
-                   "WHERE NOT EXISTS (SELECT 1 FROM truetosize.score_submissions WHERE submitter=$4 AND shoe_type=$5)";
+                   "WHERE NOT EXISTS (SELECT 1 FROM truetosize.score_submissions WHERE submitter = $4 AND shoe_type = $5)";
     const client = new Client();
     try {
       await client.connect();
       await client.query(update, [ score, submitter, shoe_type ]);
       await client.query(insert, [ submitter, shoe_type, score, submitter, shoe_type ]);
+      await client.end();
+    }
+    catch (e) {
+      console.error("Error connecting: " + e);
+      return res.status(500).json({
+        success: 0,
+        error: "Internal server error: " + e
+      });
+    }
+
+    res.status(201).json({  
+      success: 1
+    });
+  });
+
+  app.post('/delete_score', async function(req, res) {
+    if(!('submitter' in req.body) || !('shoe_type' in req.body)) {
+      return res.status(400).json({
+        success: 0,
+        error: "Missing required parameter"
+      });
+    }
+
+    const submitter = req.body.submitter;
+    const shoe_type = req.body.shoe_type;
+
+    const select = "SELECT * FROM truetosize.score_submissions WHERE submitter = $1 AND shoe_type = $2";
+    const remove = "DELETE FROM truetosize.score_submissions WHERE submitter = $1 AND shoe_type = $2";
+    const client = new Client();
+    
+    try {
+      await client.connect();
+      var {rows} = await client.query(select, [ submitter, shoe_type ]);
+      if (rows.length == 0) {
+        await client.end();
+        return res.status(404).json({
+          success: 0,
+          error: "Score not found"
+        });
+      }
+      await client.query(remove, [ submitter, shoe_type ]);
       await client.query('COMMIT');
       await client.end();
     }
@@ -39,11 +78,10 @@ module.exports = function(app){
       console.error("Error connecting: " + e);
       return res.status(500).json({
         success: 0,
-        error: "Internal server error"
+        error: "Internal server error: " + e
       });
     }
-
-    res.status(201).json({  
+    return res.status(200).json({
       success: 1
     });
   });

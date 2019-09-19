@@ -264,25 +264,14 @@ describe('/submit_score', function() {
       .expect(400);
     });
 
-
-    it('gives a 404 when score cannot be found', async function() {
-      await request(app)
-      .post('/submit_score')
-      .send({ 
-        submitter: "test_submitter",
-        shoe_type: "test_shoe"
-      })
-      .set('Accept', 'application/json')
-      .expect('Content-Type', /json/)
-      .expect(404);
-    });
-
     it('removes an existing score', async function() {
+
       await request(app)
       .post('/submit_score')
       .send({ 
         submitter: "test_submitter",
-        shoe_type: "test_shoe"
+        shoe_type: "test_shoe",
+        score: 5
       })
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
@@ -295,9 +284,9 @@ describe('/submit_score', function() {
       catch (e) {
         assert.fail("Could not connect: " + e);
       }
-
+      
       var { rows } = await client.query("SELECT * FROM truetosize.score_submissions");
-      expect(rows.length).to.equal(1); We need something to remove
+      expect(rows.length).to.equal(1); //We need something to remove
       
       await request(app)
       .post('/delete_score')
@@ -308,13 +297,26 @@ describe('/submit_score', function() {
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(200);
+      
 
       var results = await client.query("SELECT * FROM truetosize.score_submissions");
+      await client.end();
       rows = results.rows;
-      expect(rows.length).to.equal(1);
+      expect(rows.length).to.equal(0);
 
     });
 
+    it('gives a 404 when score cannot be found', async function() {
+      await request(app)
+      .post('/delete_score')
+      .send({ 
+        submitter: "test_submitter",
+        shoe_type: "test_shoe"
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(404);
+    });
   });
 
 });
