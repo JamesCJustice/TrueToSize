@@ -39,7 +39,6 @@ async function create_schema() {
   try {
     await client.connect();
     await client.query(sql);
-    await client.query('COMMIT');
     await client.end();
   }
   catch (e) {
