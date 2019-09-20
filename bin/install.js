@@ -97,7 +97,7 @@ async function create_aggregate_scores_table() {
 }
 
 module.exports.install = async function install () {
-  console.log("installation started...");
+  console.log("Installation started...");
   
   console.log("creating database...");
   await create_database();
@@ -111,6 +111,6 @@ module.exports.install = async function install () {
   console.log("creating aggregates");
   await create_aggregate_scores_table();
 
-  console.log("Finished");
+  console.log("Installation finished");
 
 };

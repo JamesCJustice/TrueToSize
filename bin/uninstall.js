@@ -2,7 +2,7 @@ const Client = require('pg').Client;
 
 
 module.exports.uninstall = async function uninstall () {
-  console.log("uninstall started...");
+  console.log("Uninstall started...");
   const client  = new Client();
 
   const sql = [
@@ -25,5 +25,5 @@ module.exports.uninstall = async function uninstall () {
     return new Error("Error creating aggregate scores table: " + e);
   }
 
-  console.log("Finished");
+  console.log("Uninstall finished");
 };
