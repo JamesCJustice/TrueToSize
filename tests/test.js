@@ -383,8 +383,6 @@ describe('/submit_score', function() {
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(200);
-
-      console.log("Results: " + JSON.stringify(results));
     });
   });
 
@@ -448,16 +446,16 @@ describe('aggregate_scores', function() {
       assert.fail("Could not fetch rows: " + e);
     }
     expect(red_results.rows.length).to.equal(1);
-    expect(blue_results.row.length).to.equal(1);
+    expect(blue_results.rows.length).to.equal(1);
 
     expect(red_results.rows[0].average_score).to.equal(3);
     expect(blue_results.rows[0].average_score).to.equal(1.8);
   });
 
   it('Updates averages correctly', async function() {
-    var insert = "INSERT INTO truetosize.score_submissions(submitter, shoe_type, score)" +
+    var insert = "INSERT INTO truetosize.score_submissions(submitter, shoe_type, score) " +
                  "VALUES " +
-                 "('user10', 'red_shoe', 1)" +
+                 "('user10', 'red_shoe', 1), " +
                  "('user1', 'blue_shoe', 1)";
     var select_red = "SELECT * FROM truetosize.aggregate_scores WHERE shoe_type = 'red_shoe'";
     var select_blue = "SELECT * FROM truetosize.aggregate_scores WHERE shoe_type = 'blue_shoe'";
@@ -476,7 +474,7 @@ describe('aggregate_scores', function() {
     }
 
     expect(red_results.rows.length).to.equal(1);
-    expect(blue_results.row.length).to.equal(1);
+    expect(blue_results.rows.length).to.equal(1);
 
     expect(red_results.rows[0].average_score).to.equal(2.7);
     expect(blue_results.rows[0].average_score).to.equal(1.7);
