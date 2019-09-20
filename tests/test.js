@@ -462,6 +462,7 @@ describe('aggregate_scores', function() {
     var select_red = "SELECT * FROM truetosize.aggregate_scores WHERE shoe_type = 'red_shoe'";
     var select_blue = "SELECT * FROM truetosize.aggregate_scores WHERE shoe_type = 'blue_shoe'";
 
+    const client = new Client();
     try {
       await client.connect();
       await client.query(insert);
