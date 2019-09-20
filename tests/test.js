@@ -374,7 +374,7 @@ describe('/submit_score', function() {
     });
 
     it('returns an existing submission',  async function() {
-      const results = await request(app)
+      const response = await request(app)
       .get('/fetch_submission')
       .send({ 
         submitter: "test_submitter",
@@ -383,6 +383,10 @@ describe('/submit_score', function() {
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(200);
+      const data = JSON.parse(response.text);
+      expect(data.submission.submitter).to.match(/test_submitter/);
+      expect(data.submission.shoe_type).to.match(/test_shoe/);
+      expect(data.submission.score).to.equal(5);
     });
   });
 
@@ -449,8 +453,8 @@ describe('/fetch_average_score', function() {
       .set('Accept', 'application/json')
       .expect('Content-Type', /json/)
       .expect(200);
-    console.log(JSON.stringify());
-    expect(response.score).to.equal(1.3);
+    const data = JSON.parse(response.text);
+    expect(data.average_score).to.equal(3);
   });
 });
 

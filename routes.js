@@ -123,4 +123,42 @@ module.exports = function(app) {
       submission: rows[0]
     });
   });
+
+  app.get('/fetch_average_score', async function(req, res) {
+    if(!('shoe_type' in req.body)) {
+      return res.status(400).json({
+        success: 0,
+        error: "Missing required parameter: shoe_type"
+      });
+    }
+
+    const shoe_type = req.body.shoe_type;
+    const select = "SELECT average_score FROM truetosize.aggregate_scores WHERE shoe_type = $1";
+    const client = new Client();
+    var results;
+    try {
+      await client.connect();
+      results = await client.query(select, [ shoe_type ]);
+      await client.end();
+    }
+    catch (e) {
+      console.error("Error fetching average score: " + e);
+      return res.status(500).json({
+        success: 0,
+        error: "Internal server error: " + e
+      });
+    }
+
+    if (results.rows.length == 0) {
+        return res.status(404).json({
+          success: 0,
+          error: "Score not found"
+        });
+    }
+
+    return res.status(200).json({
+      success: 1,
+      average_score: results.rows[0].average_score
+    });
+  });
 }
