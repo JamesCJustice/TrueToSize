@@ -547,8 +547,8 @@ describe('aggregate_scores', function() {
     expect(red_results.rows.length).to.equal(1);
     expect(blue_results.rows.length).to.equal(1);
 
-    expect(red_results.rows[0].average_score).to.equal(2.7);
-    expect(blue_results.rows[0].average_score).to.equal(1.7);
+    expect(red_results.rows[0].average_score).to.be.closeTo(2.666, 0.001);
+    expect(blue_results.rows[0].average_score).to.be.closeTo(1.666, 0.001);
   });
 
 });
