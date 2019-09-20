@@ -388,6 +388,73 @@ describe('/submit_score', function() {
 
 });
 
+describe('/fetch_average_score', function() {
+  before(async function() {
+    await install.install();
+    var insert = "INSERT INTO truetosize.score_submissions(submitter, shoe_type, score)" +
+                 "VALUES " +
+                 "('user1', 'red_shoe', 5), " +
+                 "('user2', 'red_shoe', 4), " +
+                 "('user3', 'red_shoe', 3), " +
+                 "('user4', 'red_shoe', 2), " +
+                 "('user5', 'red_shoe', 1), " +
+                 "('user6', 'blue_shoe', 1), " +
+                 "('user7', 'blue_shoe', 1), " +
+                 "('user8', 'blue_shoe', 1), " +
+                 "('user9', 'blue_shoe', 1), " +
+                 "('user10', 'blue_shoe', 5)";
+  const client = new Client();
+    try {
+      await client.connect();
+      await client.query(insert);
+      await client.end();
+    }
+    catch (e) {
+      assert.fail("Could not populate table: " + e);
+    }
+
+    await aggregation.aggregate();
+
+  });
+  after(async function() {
+    await uninstall.uninstall();
+  });
+
+  it('should give 400 when missing required parameters', async function() {
+    await request(app)
+      .get('/fetch_average_score')
+      .send({ })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(400);
+  });
+
+  it('should give a 404 when score cannot be found', async function() {
+    await request(app)
+      .get('/fetch_average_score')
+      .send({ 
+        shoe_type: "not_a_real_shoe"
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(404);
+  });
+
+  it('should return valid scores', async function() {
+    const response = await request(app)
+      .get('/fetch_average_score')
+      .send({ 
+        shoe_type: "red_shoe"
+      })
+      .set('Accept', 'application/json')
+      .expect('Content-Type', /json/)
+      .expect(200);
+    console.log(JSON.stringify());
+    expect(response.score).to.equal(1.3);
+  });
+});
+
+
 describe('aggregate_scores', function() {
   before(async function() {
     await install.install();
