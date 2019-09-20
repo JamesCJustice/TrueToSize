@@ -1,4 +1,6 @@
 const Client = require('pg').Client;
+const install = require('./bin/install');
+const uninstall = require('./bin/uninstall');
 
 module.exports = function(app) {
   app.post('/submit_score', async function(req, res) {
@@ -159,6 +161,44 @@ module.exports = function(app) {
     return res.status(200).json({
       success: 1,
       average_score: results.rows[0].average_score
+    });
+  });
+
+  app.post('/admin/install', async function(req, res) {
+    try {
+      await install.install();
+    }
+    catch (e) {
+      return res.status(500).json({
+        success: 0,
+        error: "Internal server error: " + e
+      });
+    }
+
+    return res.status(200).json({
+      success: 1
+    });
+  });
+
+  app.post('/admin/uninstall', async function(req, res) {
+    try {
+      await uninstall.uninstall();
+    }
+    catch (e) {
+      return res.status(500).json({
+        success: 0,
+        error: "Internal server error: " + e
+      });
+    }
+
+    return res.status(200).json({
+      success: 1
+    });
+  });
+
+  app.get('/admin/health', async function(req, res) {
+    return res.status(200).json({
+      success: 1
     });
   });
 }

@@ -4,8 +4,8 @@ const before = require('mocha').before;
 const it = require('mocha').it;
 const assert = require('assert');
 const Client = require('pg').Client;
-const install = require('../bin/install');
 const aggregation = require('../bin/aggregate_scores');
+const install = require('../bin/install');
 const uninstall = require('../bin/uninstall');
 const request = require('supertest');
 
@@ -37,10 +37,15 @@ async function table_exists(schema, table) {
 }
 
 
-describe('install and uninstall', function() {
+describe('admin/install and admin/uninstall', function() {
 
   before(async function() {
-    await install.install();
+    await request(app)
+    .post('/admin/install')
+    .send({})
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(200);
   });
 
   it('should start the postgres server', async function() {
@@ -69,7 +74,13 @@ describe('install and uninstall', function() {
   });
 
   it('should uninstall database tables', async function() {
-    await uninstall.uninstall();
+    await request(app)
+    .post('/admin/uninstall')
+    .send({})
+    .set('Accept', 'application/json')
+    .expect('Content-Type', /json/)
+    .expect(200);
+
     for (var i = 0; i < DATABASE_TABLES.length; i++) {
       const exists = await table_exists('truetosize', DATABASE_TABLES[i]);
       expect(exists, "table '" + DATABASE_TABLES[i] + "' has been removed").to.equal(false);  
@@ -549,6 +560,17 @@ describe('aggregate_scores', function() {
 
     expect(red_results.rows[0].average_score).to.be.closeTo(2.666, 0.001);
     expect(blue_results.rows[0].average_score).to.be.closeTo(1.666, 0.001);
+  });
+
+  describe('/health', function() {
+    it('should accept HTTP requests', async function() {
+      await request(app)
+        .get('/admin/health')
+        .send({ })
+        .set('Accept', 'application/json')
+        .expect('Content-Type', /json/)
+        .expect(200);
+    });
   });
 
 });
