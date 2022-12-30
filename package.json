@@ -20,7 +20,7 @@
     "chai": "^4.2.0",
     "docker-compose-mocha": "^1.2.0",
     "dotenv": "^8.1.0",
-    "mocha": "^6.2.0",
+    "mocha": "^10.2.0",
     "nyc": "^14.1.1",
     "request": "^2.88.0",
     "request-promise": "^4.2.4",
